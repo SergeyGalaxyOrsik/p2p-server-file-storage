@@ -4,37 +4,45 @@ project(storage-node LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Include directories
-target_include_directories(storage-node PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/core
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/platform
-    ${CMAKE_CURRENT_SOURCE_DIR}/../common/include
-)
-
 # Source files
 file(GLOB_RECURSE SOURCES
     src/core/*.cpp
+    src/main.cpp
 )
 
-# Platform specific sources and libraries
+# Platform specific sources
+file(GLOB_RECURSE PLATFORM_SOURCES 
+    src/platform/factory.cpp
+)
 if(WIN32)
-    file(GLOB_RECURSE PLATFORM_SOURCES src/platform/windows/*.cpp)
-    list(APPEND SOURCES ${PLATFORM_SOURCES})
-    
-    add_definitions(-D_WIN32_WINNT=0x0601)
-    
-    add_executable(storage-node ${SOURCES})
-    target_link_libraries(storage-node PRIVATE ws2_32)
+    file(GLOB_RECURSE WINDOWS_SOURCES src/platform/windows/*.cpp)
+    list(APPEND PLATFORM_SOURCES ${WINDOWS_SOURCES})
 elseif(UNIX)
-    file(GLOB_RECURSE PLATFORM_SOURCES src/platform/linux/*.cpp)
-    list(APPEND SOURCES ${PLATFORM_SOURCES})
-    
-    add_executable(storage-node ${SOURCES})
+    file(GLOB_RECURSE LINUX_SOURCES src/platform/linux/*.cpp)
+    list(APPEND PLATFORM_SOURCES ${LINUX_SOURCES})
+endif()
+list(APPEND SOURCES ${PLATFORM_SOURCES})
+
+# Platform specific definitions and libraries
+if(WIN32)
+    add_definitions(-D_WIN32_WINNT=0x0601)
+endif()
+
+# Create executable
+add_executable(storage-node ${SOURCES})
+
+# Include directories
+target_include_directories(storage-node PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/../common/include
+)
+
+# Link libraries
+if(WIN32)
+    target_link_libraries(storage-node PRIVATE ws2_32 iphlpapi)
+elseif(UNIX)
     target_link_libraries(storage-node PRIVATE pthread)
 endif()
 
 # Link common library
-# Assuming common library is built in the parent directory or available as a target
-# If 'common' is a subdirectory in the root project, it should be linked here.
-# For now, we assume it's available as a target named 'common'.
 target_link_libraries(storage-node PRIVATE common)

@@ -3,6 +3,12 @@
 #define WIN32_LEAN_AND_MEAN
 #include <iostream>
 #include <windows.h>
+#ifdef DeleteFile
+#undef DeleteFile
+#endif
+#ifdef CreateDirectory
+#undef CreateDirectory
+#endif
 
 bool WindowsFileHandler::FileExists(const std::string &filepath) {
   DWORD dwAttrib = GetFileAttributesA(filepath.c_str());
@@ -129,10 +135,10 @@ bool WindowsFileHandler::GetFileInfo(const std::string &filepath,
 }
 
 bool WindowsFileHandler::CreateDirectory(const std::string &path) {
-  if (DirectoryExists(path)) {
+  if (this->DirectoryExists(path)) {
     return true;
   }
-  return CreateDirectoryA(path.c_str(), NULL) != 0;
+  return ::CreateDirectoryA(path.c_str(), NULL) != 0;
 }
 
 bool WindowsFileHandler::DirectoryExists(const std::string &path) {
